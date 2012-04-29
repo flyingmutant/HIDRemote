@@ -271,7 +271,7 @@ static HIDRemote *sHIDRemote = nil;
                                                                   rootService,
                                                                   kIOBusyInterest,
                                                                   SecureInputNotificationCallback,
-                                                                  (void *)self,
+                                                                  (__bridge void *)self,
                                                                   &_secureInputNotification);
                     if (kernReturn != kIOReturnSuccess) { break; }
 
@@ -292,7 +292,7 @@ static HIDRemote *sHIDRemote = nil;
                                                           kIOFirstMatchNotification,
                                                           matchDict,            // one reference count consumed by this call
                                                           ServiceMatchingCallback,
-                                                          (void *) self,
+                                                          (__bridge void *) self,
                                                           &_matchingServicesIterator);
             if (kernReturn != kIOReturnSuccess) { break; }
 
@@ -844,7 +844,7 @@ static HIDRemote *sHIDRemote = nil;
     if (service != 0)
     {
         // IOClass matching
-        if ((ioClass = (NSString *)IORegistryEntryCreateCFProperty((io_registry_entry_t)service,
+        if ((ioClass = (__bridge_transfer NSString *)IORegistryEntryCreateCFProperty((io_registry_entry_t)service,
                                                                    CFSTR(kIOClassKey),
                                                                    kCFAllocatorDefault,
                                                                    0)) != nil)
@@ -872,12 +872,10 @@ static HIDRemote *sHIDRemote = nil;
             {
                 serviceMatches = YES;
             }
-
-            CFRelease((CFTypeRef)ioClass);
         }
 
         // Match on services that claim compatibility with the HID Remote class (Candelair or third-party) by having a property of CandelairHIDRemoteCompatibilityMask = 1 <Type: Number>
-        if ((candelairHIDRemoteCompatibilityMask = (NSNumber *)IORegistryEntryCreateCFProperty((io_registry_entry_t)service, CFSTR("CandelairHIDRemoteCompatibilityMask"), kCFAllocatorDefault, 0)) != nil)
+        if ((candelairHIDRemoteCompatibilityMask = (__bridge_transfer NSNumber *)IORegistryEntryCreateCFProperty((io_registry_entry_t)service, CFSTR("CandelairHIDRemoteCompatibilityMask"), kCFAllocatorDefault, 0)) != nil)
         {
             if ([candelairHIDRemoteCompatibilityMask isKindOfClass:[NSNumber class]])
             {
@@ -890,8 +888,6 @@ static HIDRemote *sHIDRemote = nil;
                     serviceMatches = NO;
                 }
             }
-
-            CFRelease((CFTypeRef)candelairHIDRemoteCompatibilityMask);
         }
     }
 
@@ -1141,9 +1137,9 @@ static HIDRemote *sHIDRemote = nil;
 
                 hidDict = CFArrayGetValueAtIndex(hidElements, i);
 
-                usage     = (NSNumber *) CFDictionaryGetValue(hidDict, CFSTR(kIOHIDElementUsageKey));
-                usagePage = (NSNumber *) CFDictionaryGetValue(hidDict, CFSTR(kIOHIDElementUsagePageKey));
-                cookie    = (NSNumber *) CFDictionaryGetValue(hidDict, CFSTR(kIOHIDElementCookieKey));
+                usage     = (__bridge NSNumber *) CFDictionaryGetValue(hidDict, CFSTR(kIOHIDElementUsageKey));
+                usagePage = (__bridge NSNumber *) CFDictionaryGetValue(hidDict, CFSTR(kIOHIDElementUsagePageKey));
+                cookie    = (__bridge NSNumber *) CFDictionaryGetValue(hidDict, CFSTR(kIOHIDElementCookieKey));
 
                 if ((usage!=nil) && (usagePage!=nil) && (cookie!=nil))
                 {
@@ -1214,7 +1210,7 @@ static HIDRemote *sHIDRemote = nil;
             break;
         }
 
-        returnCode = (*hidQueueInterface)->setEventCallout(hidQueueInterface, HIDEventCallback, (void *)((intptr_t)service), (void *)self);
+        returnCode = (*hidQueueInterface)->setEventCallout(hidQueueInterface, HIDEventCallback, (void *)((intptr_t)service), (__bridge void *)self);
         if (returnCode != kIOReturnSuccess)
         {
             error = [NSError errorWithDomain:NSMachErrorDomain code:returnCode userInfo:nil];
@@ -1238,11 +1234,11 @@ static HIDRemote *sHIDRemote = nil;
         queueStarted = YES;
 
         // Setup device notifications
-        returnCode = IOServiceAddInterestNotification(  _notifyPort,
+        returnCode = IOServiceAddInterestNotification(_notifyPort,
                                                       service,
                                                       kIOGeneralInterest,
                                                       ServiceNotificationCallback,
-                                                      self,
+                                                      (__bridge void *)self,
                                                       &serviceNotification);
         if ((returnCode != kIOReturnSuccess) || (serviceNotification==0))
         {
@@ -1274,10 +1270,8 @@ static HIDRemote *sHIDRemote = nil;
             {
                 if (CFGetTypeID(product) == CFStringGetTypeID())
                 {
-                    [hidAttribsDict setObject:(NSString *)product forKey:kHIDRemoteProduct];
+                    [hidAttribsDict setObject:(__bridge_transfer NSString *)product forKey:kHIDRemoteProduct];
                 }
-
-                CFRelease(product);
             }
 
             if ((manufacturer = IORegistryEntryCreateCFProperty(    (io_registry_entry_t)service,
@@ -1287,10 +1281,8 @@ static HIDRemote *sHIDRemote = nil;
             {
                 if (CFGetTypeID(manufacturer) == CFStringGetTypeID())
                 {
-                    [hidAttribsDict setObject:(NSString *)manufacturer forKey:kHIDRemoteManufacturer];
+                    [hidAttribsDict setObject:(__bridge_transfer NSString *)manufacturer forKey:kHIDRemoteManufacturer];
                 }
-
-                CFRelease(manufacturer);
             }
 
             if ((transport = IORegistryEntryCreateCFProperty(   (io_registry_entry_t)service,
@@ -1300,10 +1292,8 @@ static HIDRemote *sHIDRemote = nil;
             {
                 if (CFGetTypeID(transport) == CFStringGetTypeID())
                 {
-                    [hidAttribsDict setObject:(NSString *)transport forKey:kHIDRemoteTransport];
+                    [hidAttribsDict setObject:(__bridge_transfer NSString *)transport forKey:kHIDRemoteTransport];
                 }
-
-                CFRelease(transport);
             }
         }
 
@@ -1323,20 +1313,18 @@ static HIDRemote *sHIDRemote = nil;
                     // There is => request the driver to enable it for us
                     if (IORegistryEntrySetCFProperty((io_registry_entry_t)service,
                                                      CFSTR("EnableAluminumRemoteSupportForMe"),
-                                                     [NSDictionary dictionaryWithObjectsAndKeys:
+                                                     (__bridge void *)[NSDictionary dictionaryWithObjectsAndKeys:
                                                       [NSNumber numberWithLongLong:(long long)getpid()],    @"pid",
                                                       [NSNumber numberWithLongLong:(long long)getuid()],    @"uid",
                                                       nil]) == kIOReturnSuccess)
                     {
                         if (CFGetTypeID(aluSupport) == CFNumberGetTypeID())
                         {
-                            supportLevel = (HIDRemoteAluminumRemoteSupportLevel) [(NSNumber *)aluSupport intValue];
+                            supportLevel = (HIDRemoteAluminumRemoteSupportLevel) [(__bridge_transfer NSNumber *)aluSupport intValue];
                         }
 
                         [hidAttribsDict setObject:[NSNumber numberWithBool:YES] forKey:kHIDRemoteAluminumRemoteSupportOnDemand];
                     }
-
-                    CFRelease(aluSupport);
                 }
             }
 
@@ -1349,10 +1337,8 @@ static HIDRemote *sHIDRemote = nil;
                 {
                     if (CFGetTypeID(aluSupport) == CFNumberGetTypeID())
                     {
-                        supportLevel = (HIDRemoteAluminumRemoteSupportLevel) [(NSNumber *)aluSupport intValue];
+                        supportLevel = (HIDRemoteAluminumRemoteSupportLevel) [(__bridge_transfer NSNumber *)aluSupport intValue];
                     }
-
-                    CFRelease(aluSupport);
                 }
                 else
                 {
@@ -1363,7 +1349,7 @@ static HIDRemote *sHIDRemote = nil;
                                                                           kCFAllocatorDefault,
                                                                           0)) != nil)
                     {
-                        if ([(NSString *)ioKitClassName isEqual:@"AppleIRController"])
+                        if ([(__bridge_transfer NSString *)ioKitClassName isEqual:@"AppleIRController"])
                         {
                             SInt32 systemVersion;
 
@@ -1383,8 +1369,6 @@ static HIDRemote *sHIDRemote = nil;
                                 }
                             }
                         }
-
-                        CFRelease(ioKitClassName);
                     }
                 }
             }
@@ -1513,9 +1497,9 @@ cleanUp:
         if (([serviceDict objectForKey:kHIDRemoteAluminumRemoteSupportOnDemand]!=nil) && [[serviceDict objectForKey:kHIDRemoteAluminumRemoteSupportOnDemand] boolValue] && (theService != 0))
         {
             // We previously requested the driver to enable Aluminum Remote support for us. Tell it to turn it off again - now that we no longer need it
-            IORegistryEntrySetCFProperty(   (io_registry_entry_t)theService,
+            IORegistryEntrySetCFProperty((io_registry_entry_t)theService,
                                          CFSTR("DisableAluminumRemoteSupportForMe"),
-                                         [NSDictionary dictionaryWithObjectsAndKeys:
+                                         (__bridge void *)[NSDictionary dictionaryWithObjectsAndKeys:
                                           [NSNumber numberWithLongLong:(long long)getpid()],    @"pid",
                                           [NSNumber numberWithLongLong:(long long)getuid()],    @"uid",
                                           nil]);
@@ -1839,7 +1823,7 @@ cleanUp:
 
     if ((rootService = IORegistryGetRootEntry(_masterPort)) != 0)
     {
-        if ((consoleUsersArray = (NSArray *)IORegistryEntryCreateCFProperty((io_registry_entry_t)rootService, CFSTR("IOConsoleUsers"), kCFAllocatorDefault, 0)) != nil)
+        if ((consoleUsersArray = (__bridge_transfer NSArray *)IORegistryEntryCreateCFProperty((io_registry_entry_t)rootService, CFSTR("IOConsoleUsers"), kCFAllocatorDefault, 0)) != nil)
         {
             if ([consoleUsersArray isKindOfClass:[NSArray class]])  // Be careful - ensure this really is an array
             {
@@ -1885,8 +1869,6 @@ cleanUp:
                     _lastFrontUserSession       = frontUserSession;
                 }
             }
-
-            CFRelease((CFTypeRef)consoleUsersArray);
         }
 
         IOObjectRelease((io_object_t) rootService);
@@ -1926,7 +1908,7 @@ static void HIDEventCallback(   void * target,
                              void * refCon,
                              void * sender)
 {
-    HIDRemote       *hidRemote = (HIDRemote *)refCon;
+    HIDRemote       *hidRemote = (__bridge HIDRemote *)refCon;
 
     @autoreleasepool {
         [hidRemote _hidEventFor:(io_service_t)((intptr_t)target) from:(IOHIDQueueInterface**)sender withResult:(IOReturn)result];
@@ -1937,7 +1919,7 @@ static void HIDEventCallback(   void * target,
 static void ServiceMatchingCallback(    void *refCon,
                                     io_iterator_t iterator)
 {
-    HIDRemote       *hidRemote = (HIDRemote *)refCon;
+    HIDRemote       *hidRemote = (__bridge HIDRemote *)refCon;
 
     @autoreleasepool {
         [hidRemote _serviceMatching:iterator];
@@ -1949,7 +1931,7 @@ static void ServiceNotificationCallback(void *      refCon,
                                         natural_t   messageType,
                                         void *      messageArgument)
 {
-    HIDRemote       *hidRemote = (HIDRemote *)refCon;
+    HIDRemote       *hidRemote = (__bridge HIDRemote *)refCon;
 
     @autoreleasepool {
         [hidRemote _serviceNotificationFor:service
@@ -1963,7 +1945,7 @@ static void SecureInputNotificationCallback(    void *      refCon,
                                             natural_t   messageType,
                                             void *      messageArgument)
 {
-    HIDRemote       *hidRemote = (HIDRemote *)refCon;
+    HIDRemote       *hidRemote = (__bridge HIDRemote *)refCon;
 
     @autoreleasepool {
         [hidRemote _secureInputNotificationFor:service
