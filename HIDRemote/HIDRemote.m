@@ -192,15 +192,13 @@ static HIDRemote *sHIDRemote = nil;
                          // so that third party apps can acquire an exclusive lock on the receiver HID Device
                          // via IOKit.
 
-                switch (remoteMode)
+                if (remoteMode == kHIDRemoteModeExclusive ||
+                    remoteMode == kHIDRemoteModeExclusiveAuto)
                 {
-                    case kHIDRemoteModeExclusive:
-                    case kHIDRemoteModeExclusiveAuto:
-                        if (![self isCandelairInstalled])
-                        {
-                            return (YES);
-                        }
-                        break;
+                    if (![self isCandelairInstalled])
+                    {
+                        return (YES);
+                    }
                 }
                 break;
         }
