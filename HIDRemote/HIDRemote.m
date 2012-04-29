@@ -212,12 +212,8 @@ static HIDRemote *sHIDRemote = nil;
 - (HIDRemoteAluminumRemoteSupportLevel)aluminiumRemoteSystemSupportLevel
 {
     HIDRemoteAluminumRemoteSupportLevel supportLevel = kHIDRemoteAluminumRemoteSupportLevelNone;
-    NSEnumerator *attribDictsEnum;
-    NSDictionary *hidAttribsDict;
 
-    attribDictsEnum = [_serviceAttribMap objectEnumerator];
-
-    while ((hidAttribsDict = [attribDictsEnum nextObject]) != nil)
+    for (NSDictionary *hidAttribsDict in [_serviceAttribMap objectEnumerator])
     {
         NSNumber *deviceSupportLevel;
 
@@ -342,19 +338,11 @@ static HIDRemote *sHIDRemote = nil;
     {
         NSDictionary *cloneDict = [[NSDictionary alloc] initWithDictionary:_serviceAttribMap];
 
-        if (cloneDict!=nil)
+        for (NSNumber *serviceValue in [cloneDict keyEnumerator])
         {
-            NSEnumerator *mapKeyEnum = [cloneDict keyEnumerator];
-            NSNumber *serviceValue;
-
-            while ((serviceValue = [mapKeyEnum nextObject]) != nil)
-            {
-                [self _destructService:(io_object_t)[serviceValue unsignedIntValue]];
-                serviceCount++;
-            };
-
-            cloneDict = nil;
-        }
+            [self _destructService:(io_object_t)[serviceValue unsignedIntValue]];
+            serviceCount++;
+        };
 
         _serviceAttribMap = nil;
     }
@@ -1530,10 +1518,7 @@ cleanUp:
 
         if ((hidQueueInterface!=NULL) && (cookieButtonMap!=nil))
         {
-            NSEnumerator *cookieEnum = [cookieButtonMap keyEnumerator];
-            NSNumber *cookie;
-
-            while ((cookie = [cookieEnum nextObject]) != nil)
+            for (NSNumber *cookie in [cookieButtonMap keyEnumerator])
             {
                 if ((*hidQueueInterface)->hasElement(hidQueueInterface, (IOHIDElementCookie) [cookie unsignedIntValue]))
                 {
@@ -1827,47 +1812,41 @@ cleanUp:
         {
             if ([consoleUsersArray isKindOfClass:[NSArray class]])  // Be careful - ensure this really is an array
             {
-                NSEnumerator *consoleUsersEnum; // I *love* Obj-C2's fast enumerators, but we need to stay compatible with 10.4 :-/
+                UInt64 secureEventInputPIDSum = 0;
+                uid_t frontUserSession = 0;
 
-                if ((consoleUsersEnum = [consoleUsersArray objectEnumerator]) != nil)
+                for (NSDictionary *consoleUserDict in consoleUsersArray)
                 {
-                    UInt64 secureEventInputPIDSum = 0;
-                    uid_t frontUserSession = 0;
-                    NSDictionary *consoleUserDict;
-
-                    while ((consoleUserDict = [consoleUsersEnum nextObject]) != nil)
+                    if ([consoleUserDict isKindOfClass:[NSDictionary class]]) // Be careful - ensure this really is a dictionary
                     {
-                        if ([consoleUserDict isKindOfClass:[NSDictionary class]]) // Be careful - ensure this really is a dictionary
+                        NSNumber *secureInputPID;
+                        NSNumber *onConsole;
+                        NSNumber *userID;
+
+                        if ((secureInputPID = [consoleUserDict objectForKey:@"kCGSSessionSecureInputPID"]) != nil)
                         {
-                            NSNumber *secureInputPID;
-                            NSNumber *onConsole;
-                            NSNumber *userID;
-
-                            if ((secureInputPID = [consoleUserDict objectForKey:@"kCGSSessionSecureInputPID"]) != nil)
+                            if ([secureInputPID isKindOfClass:[NSNumber class]])
                             {
-                                if ([secureInputPID isKindOfClass:[NSNumber class]])
-                                {
-                                    secureEventInputPIDSum += ((UInt64) [secureInputPID intValue]);
-                                }
+                                secureEventInputPIDSum += ((UInt64) [secureInputPID intValue]);
                             }
+                        }
 
-                            if (((onConsole = [consoleUserDict objectForKey:@"kCGSSessionOnConsoleKey"]) != nil) &&
-                                ((userID    = [consoleUserDict objectForKey:@"kCGSSessionUserIDKey"]) != nil))
+                        if (((onConsole = [consoleUserDict objectForKey:@"kCGSSessionOnConsoleKey"]) != nil) &&
+                            ((userID    = [consoleUserDict objectForKey:@"kCGSSessionUserIDKey"]) != nil))
+                        {
+                            if ([onConsole isKindOfClass:[NSNumber class]] && [userID isKindOfClass:[NSNumber class]])
                             {
-                                if ([onConsole isKindOfClass:[NSNumber class]] && [userID isKindOfClass:[NSNumber class]])
+                                if ([onConsole boolValue])
                                 {
-                                    if ([onConsole boolValue])
-                                    {
-                                        frontUserSession = (uid_t) [userID intValue];
-                                    }
+                                    frontUserSession = (uid_t) [userID intValue];
                                 }
                             }
                         }
                     }
-
-                    _lastSecureEventInputPIDSum = secureEventInputPIDSum;
-                    _lastFrontUserSession       = frontUserSession;
                 }
+
+                _lastSecureEventInputPIDSum = secureEventInputPIDSum;
+                _lastFrontUserSession       = frontUserSession;
             }
         }
 
