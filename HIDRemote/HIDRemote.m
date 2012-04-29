@@ -583,10 +583,7 @@ static HIDRemote *sHIDRemote = nil;
                 // Delay autorecover by 0.1 to avoid race conditions
                 if ((_autoRecoveryTimer = [[NSTimer alloc] initWithFireDate:[NSDate dateWithTimeIntervalSinceNow:0.1] interval:0.1 target:self selector:@selector(_delayedAutoRecovery:) userInfo:nil repeats:NO]) != nil)
                 {
-                    // Using CFRunLoopAddTimer instead of [[NSRunLoop currentRunLoop] addTimer:.. for consistency with run loop modes.
-                    // The kCFRunLoopCommonModes counterpart NSRunLoopCommonModes is only available in 10.5 and later, whereas this code
-                    // is designed to be also compatible with 10.4. CFRunLoopTimerRef is "toll-free-bridged" with NSTimer since 10.0.
-                    CFRunLoopAddTimer(CFRunLoopGetCurrent(), (CFRunLoopTimerRef)_autoRecoveryTimer, kCFRunLoopCommonModes);
+                    [[NSRunLoop currentRunLoop] addTimer:_autoRecoveryTimer forMode:NSRunLoopCommonModes];
                 }
             }
         }
@@ -1633,10 +1630,7 @@ cleanUp:
                     {
                         [hidAttribsDict setObject:shTimer forKey:kHIDRemoteSimulateHoldEventsTimer];
 
-                        // Using CFRunLoopAddTimer instead of [[NSRunLoop currentRunLoop] addTimer:.. for consistency with run loop modes.
-                        // The kCFRunLoopCommonModes counterpart NSRunLoopCommonModes is only available in 10.5 and later, whereas this code
-                        // is designed to be also compatible with 10.4. CFRunLoopTimerRef is "toll-free-bridged" with NSTimer since 10.0.
-                        CFRunLoopAddTimer(CFRunLoopGetCurrent(), (CFRunLoopTimerRef)shTimer, kCFRunLoopCommonModes);
+                        [[NSRunLoop currentRunLoop] addTimer:shTimer forMode:NSRunLoopCommonModes];
 
                         break;
                     }
