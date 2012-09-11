@@ -620,7 +620,7 @@ static HIDRemote *sHIDRemote = nil;
                                                                                kHIDRemoteDNStatusUnusedButtonCodesKey: ((_unusedButtonCodes!=nil) ? _unusedButtonCodes : @[]),
                                                                                kHIDRemoteDNStatusActionKey: action,
                                                                                (NSString *)kCFBundleIdentifierKey: [[NSBundle mainBundle] bundleIdentifier],
-                                                                               kHIDRemoteDNStatusReturnToPIDKey: _returnToPID}
+                                                                               kHIDRemoteDNStatusReturnToPIDKey: _returnToPID ? _returnToPID : [NSNull null]}
                                                            deliverImmediately:YES
          ];
     }
@@ -724,6 +724,9 @@ static HIDRemote *sHIDRemote = nil;
                         if ((pidNumber      = [notification userInfo][kHIDRemoteDNStatusPIDKey]) != nil)
                         {
                             returnToPIDNumber = [notification userInfo][kHIDRemoteDNStatusReturnToPIDKey];
+                            if (returnToPIDNumber == (id)[NSNull null]) {
+                                returnToPIDNumber = nil;
+                            }
 
                             if ([action isEqual:kHIDRemoteDNStatusActionStart])
                             {
