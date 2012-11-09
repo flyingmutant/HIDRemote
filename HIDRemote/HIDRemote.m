@@ -611,18 +611,25 @@ static HIDRemote *sHIDRemote = nil;
 {
     if (_sendStatusNotifications)
     {
+        NSDictionary* d = @{kHIDRemoteDNStatusHIDRemoteVersionKey: @1,
+                            kHIDRemoteDNStatusPIDKey: @((unsigned int)getpid()),
+                            kHIDRemoteDNStatusModeKey: @((int)_mode),
+                            kHIDRemoteDNStatusRemoteControlCountKey: @((unsigned int)[self activeRemoteControlCount]),
+                            kHIDRemoteDNStatusUnusedButtonCodesKey: ((_unusedButtonCodes!=nil) ? _unusedButtonCodes : @[]),
+                            kHIDRemoteDNStatusActionKey: action,
+                            (NSString *)kCFBundleIdentifierKey: [[NSBundle mainBundle] bundleIdentifier]};
+
+        NSMutableDictionary* md = [NSMutableDictionary dictionaryWithDictionary:d];
+
+        if (_returnToPID) {
+            md[kHIDRemoteDNStatusReturnToPIDKey] = _returnToPID;
+        }
+
         [[NSDistributedNotificationCenter defaultCenter] postNotificationName:kHIDRemoteDNHIDRemoteStatus
                                                                        object:((_pidString!=nil) ? _pidString : [NSString stringWithFormat:@"%d",getpid()])
-                                                                     userInfo:@{kHIDRemoteDNStatusHIDRemoteVersionKey: @1,
-                                                                               kHIDRemoteDNStatusPIDKey: @((unsigned int)getpid()),
-                                                                               kHIDRemoteDNStatusModeKey: @((int)_mode),
-                                                                               kHIDRemoteDNStatusRemoteControlCountKey: @((unsigned int)[self activeRemoteControlCount]),
-                                                                               kHIDRemoteDNStatusUnusedButtonCodesKey: ((_unusedButtonCodes!=nil) ? _unusedButtonCodes : @[]),
-                                                                               kHIDRemoteDNStatusActionKey: action,
-                                                                               (NSString *)kCFBundleIdentifierKey: [[NSBundle mainBundle] bundleIdentifier],
-                                                                               kHIDRemoteDNStatusReturnToPIDKey: _returnToPID ? _returnToPID : [NSNull null]}
+                                                                     userInfo:[md copy]
                                                            deliverImmediately:YES
-         ];
+        ];
     }
 }
 
