@@ -1262,6 +1262,10 @@ static HIDRemote *sHIDRemote = nil;
                 {
                     hidAttribsDict[kHIDRemoteProduct] = (__bridge_transfer NSString *)product;
                 }
+                else
+                {
+                    CFRelease(product);
+                }
             }
 
             if ((manufacturer = IORegistryEntryCreateCFProperty(    (io_registry_entry_t)service,
@@ -1273,6 +1277,10 @@ static HIDRemote *sHIDRemote = nil;
                 {
                     hidAttribsDict[kHIDRemoteManufacturer] = (__bridge_transfer NSString *)manufacturer;
                 }
+                else
+                {
+                    CFRelease(manufacturer);
+                }
             }
 
             if ((transport = IORegistryEntryCreateCFProperty(   (io_registry_entry_t)service,
@@ -1283,6 +1291,10 @@ static HIDRemote *sHIDRemote = nil;
                 if (CFGetTypeID(transport) == CFStringGetTypeID())
                 {
                     hidAttribsDict[kHIDRemoteTransport] = (__bridge_transfer NSString *)transport;
+                }
+                else
+                {
+                    CFRelease(transport);
                 }
             }
         }
@@ -1310,8 +1322,16 @@ static HIDRemote *sHIDRemote = nil;
                         {
                             supportLevel = (HIDRemoteAluminumRemoteSupportLevel) [(__bridge_transfer NSNumber *)aluSupport intValue];
                         }
+                        else
+                        {
+                            CFRelease(aluSupport);
+                        }
 
                         hidAttribsDict[kHIDRemoteAluminumRemoteSupportOnDemand] = @YES;
+                    }
+                    else
+                    {
+                        CFRelease(aluSupport);
                     }
                 }
             }
@@ -1326,6 +1346,10 @@ static HIDRemote *sHIDRemote = nil;
                     if (CFGetTypeID(aluSupport) == CFNumberGetTypeID())
                     {
                         supportLevel = (HIDRemoteAluminumRemoteSupportLevel) [(__bridge_transfer NSNumber *)aluSupport intValue];
+                    }
+                    else
+                    {
+                        CFRelease(aluSupport);
                     }
                 }
                 else
